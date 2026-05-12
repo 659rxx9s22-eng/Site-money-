@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة المروجين المحترفة</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+        body { background: #f0f4f8; font-family: 'Cairo', sans-serif; }
+        .hidden { display: none !important; }
+        .ltr { direction: ltr; text-align: left; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+    </style>
+</head>
+<body>
+
+    <div id="auth-page" class="min-h-screen flex items-center justify-center p-6">
+        <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-md border border-slate-100">
+            <div class="text-center mb-8">
+                <div class="bg-blue-600 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                    <i class="fas fa-rocket text-white text-3xl"></i>
+                </div>
+                <h2 id="auth-title" class="text-2xl font-black text-slate-800">تسجيل الدخول</h2>
+                <p id="auth-desc" class="text-slate-400 text-sm">أهلاً بك في منصة المروجين</p>
+            </div>
+
+            <div class="space-y-4">
+                <input type="email" id="email" placeholder="البريد الإلكتروني" class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 text-center font-bold">
+                <input type="password" id="password" placeholder="كلمة المرور" class="w-full p-4 rounded-2xl bg-slate-50 border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 text-center font-bold">
+                
+                <button id="mainBtn" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-xl hover:bg-blue-700 transition-all">دخول</button>
+                
+                <div class="text-center mt-6">
+                    <button id="toggleAuth" class="text-blue-600 font-bold text-sm underline">ليس لديك حساب؟ إنشاء حساب جديد</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboard" class="hidden min-h-screen pb-12">
+        <div class="glass p-5 shadow-sm flex justify-between items-center px-8 border-b border-slate-100 sticky top-0 z-50">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 text-white p-2 rounded-xl"><i class="fas fa-chart-line"></i></div>
+                <span class="font-black text-slate-700">لوحة المروج</span>
+            </div>
+            <button id="logoutBtn" class="text-red-500 font-bold bg-red-50 px-4 py-2 rounded-xl text-sm">خروج</button>
+        </div>
+
+        <div class="p-6 max-w-lg mx-auto space-y-6">
+            
+            <div class="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-50">
+                <div class="text-right">
+                    <p class="text-slate-400 text-[10px] font-bold">مرحباً بكِ</p>
+                    <h4 id="user-display-name" class="text-slate-800 font-black">...</h4>
+                </div>
+                <a href="https://t.me/your_link" target="_blank" class="bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 animate-pulse">
+                    <i class="fas fa-headset"></i> الدعم الفني
+                </a>
+            </div>
+
+            <div class="bg-slate-900 p-6 rounded-[2rem] shadow-xl text-white">
+                <h4 class="font-black mb-2 text-sm flex items-center gap-2">
+                    <i class="fas fa-link text-blue-400"></i> رابطك الخاص
+                </h4>
+                <div class="flex flex-col gap-3">
+                    <input type="text" id="referral-link" readonly class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-[10px] text-blue-300 outline-none ltr">
+                    <button onclick="copyLink()" class="bg-blue-600 text-white font-black py-3 rounded-xl hover:bg-blue-700 transition flex items-center justify-center gap-2">
+                        <i class="far fa-copy"></i> نسخ الرابط
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white p-5 rounded-[2rem] shadow-sm border-b-4 border-emerald-500 text-center">
+                    <p class="text-[10px] text-slate-400 font-bold mb-1">أرباح اليوم</p>
+                    <h3 id="today-earnings" class="text-xl font-black text-slate-800">$0.00</h3>
+                </div>
+                <div class="bg-white p-5 rounded-[2rem] shadow-sm border-b-4 border-blue-500 text-center">
+                    <p class="text-[10px] text-slate-400 font-bold mb-1">الإجمالي</p>
+                    <h3 id="total-earnings" class="text-xl font-black text-slate-800">$0.00</h3>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm flex items-center justify-between border border-slate-100">
+                <div>
+                    <p class="text-slate-400 text-xs font-bold uppercase">النقرات</p>
+                    <h3 id="clicks" class="text-4xl font-black text-slate-800 mt-1">0</h3>
+                </div>
+                <div class="bg-blue-50 p-5 rounded-2xl text-blue-600"><i class="fas fa-mouse-pointer text-2xl"></i></div>
+            </div>
+
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+                <h4 class="font-bold text-slate-800 mb-4 text-center">طلب سحب رصيد</h4>
+                <input type="number" id="withdraw-amount" placeholder="المبلغ $" class="w-full p-4 mb-3 rounded-xl bg-slate-50 border border-slate-200 outline-none text-center font-bold">
+                <button onclick="requestWithdraw()" class="w-full bg-slate-800 text-white font-black py-4 rounded-xl hover:bg-black transition">تقديم الطلب</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyBf5F5vhbpu8fjp4rS9M-Uj-gUPR88qbds",
+          authDomain: "my-site-6f7ff.firebaseapp.com",
+          databaseURL: "https://my-site-6f7ff-default-rtdb.firebaseio.com",
+          projectId: "my-site-6f7ff",
+          storageBucket: "my-site-6f7ff.firebasestorage.app",
+          messagingSenderId: "171038692625",
+          appId: "1:171038692625:web:4f5d02855d65aef7a768b0"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        let isLoginMode = true;
+
+        // تبديل بين دخول وإنشاء حساب
+        document.getElementById('toggleAuth').onclick = () => {
+            isLoginMode = !isLoginMode;
+            document.getElementById('auth-title').innerText = isLoginMode ? "تسجيل الدخول" : "إنشاء حساب جديد";
+            document.getElementById('mainBtn').innerText = isLoginMode ? "دخول" : "تسجيل";
+            document.getElementById('toggleAuth').innerText = isLoginMode ? "ليس لديك حساب؟ إنشاء حساب جديد" : "لديك حساب بالفعل؟ سجل دخولك";
+        };
+
+        // تنفيذ الدخول أو التسجيل
+        document.getElementById('mainBtn').onclick = () => {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            if(!email || !pass) return alert("يرجى ملء الحقول");
+
+            if (isLoginMode) {
+                auth.signInWithEmailAndPassword(email, pass).catch(err => alert(err.message));
+            } else {
+                auth.createUserWithEmailAndPassword(email, pass).then((res) => {
+                    const username = email.split('@')[0];
+                    // إنشاء بيانات أولية للمروج الجديد في فايربيز
+                    db.ref('users_data/' + username).set({
+                        earnings: "0.00",
+                        today_earnings: "0.00",
+                        clicks: 0
+                    });
+                }).catch(err => alert(err.message));
+            }
+        };
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('auth-page').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+                const username = user.email.split('@')[0];
+                document.getElementById('user-display-name').innerText = username;
+                document.getElementById('referral-link').value = window.location.origin + "/go.html?id=" + username;
+                loadData(username);
+            } else {
+                document.getElementById('auth-page').classList.remove('hidden');
+                document.getElementById('dashboard').classList.add('hidden');
+            }
+        });
+
+        document.getElementById('logoutBtn').onclick = () => auth.signOut();
+
+        function loadData(username) {
+            db.ref('users_data/' + username).on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    document.getElementById('total-earnings').innerText = '$' + (data.earnings || '0.00');
+                    document.getElementById('today-earnings').innerText = '$' + (data.today_earnings || '0.00');
+                    document.getElementById('clicks').innerText = data.clicks || '0';
+                }
+            });
+        }
+
+        function copyLink() {
+            const link = document.getElementById('referral-link');
+            link.select();
+            document.execCommand('copy');
+            alert("تم نسخ رابطك التسويقي!");
+        }
+
+        function requestWithdraw() {
+            alert("تم إرسال طلب السحب للإدارة.");
+        }
+    </script>
+</body>
+</html>
